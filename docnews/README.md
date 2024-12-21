@@ -1,4 +1,4 @@
-# inbox_z
+# Doc News
 
 A new Flutter project.
 
