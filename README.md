@@ -2,4 +2,5 @@
 - Đỗ Đăng Minh
 - Nguyễn Chí Thanh
 - Tạ Thành Phú
-![Image](<DocNews-App.png>)
+
+#![Image](<DocNews-App.png>)
