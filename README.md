@@ -1,4 +1,4 @@
-# Nhóm 11 - judasnopefirejr
+# Nhóm 11 - DocNews-App
 - Đỗ Đăng Minh
 - Nguyễn Chí Thanh
 - Tạ Thành Phú
