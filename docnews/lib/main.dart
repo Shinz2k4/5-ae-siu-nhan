@@ -27,27 +27,34 @@ class MyApp extends StatelessWidget {
 
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
-
+  var messages = <String>[];
   var favorites = <WordPair>[];
 
   void getNext() {
     current = WordPair.random();
+    messages.add('WordPair changed to ${current.asLowerCase}.');
     notifyListeners();
   }
 
   void toggleFavorite() {
     if (favorites.contains(current)) {
       favorites.remove(current);
+      messages.add('Removed ${current.asLowerCase} from favorites.');
     } else {
       favorites.add(current);
+      messages.add('Added ${current.asLowerCase} to favorites.');
     }
     notifyListeners();
   }
 
   void removeFavorite(WordPair pair) {
     favorites.remove(pair);
-    notifyListeners(); // Gọi notifyListeners để cập nhật giao diện
+    messages.add('Removed ${pair.asLowerCase} from favorites.');
+    notifyListeners(); 
+  
   }
+
+    
 }
 
 class MyHomePage extends StatefulWidget {
@@ -63,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = GeneratorPage();
+        page = HomePage();
         break;
       case 1:
         page = FavoritesPage();
@@ -113,7 +120,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class GeneratorPage extends StatelessWidget {
+class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
@@ -130,8 +137,49 @@ class GeneratorPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          
+          Expanded( 
+            child: Container(
+              padding: const EdgeInsets.all(8.0),
+              child: ShaderMask(
+                shaderCallback: (bounds) {
+                  return LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent, 
+                      Colors.black, 
+                    ],
+                    stops: [0.0, 0.8],
+                  ).createShader(bounds);
+                },
+                blendMode: BlendMode.dstIn,
+                child: ListView.builder(
+                  itemCount: appState.messages.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 1.0),
+                      child: Text(
+                        appState.messages[index],
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+          
+          
+          
           BigCard(pair: pair),
+            
           SizedBox(height: 10),
+          
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -150,6 +198,11 @@ class GeneratorPage extends StatelessWidget {
                 child: Text('Next'),
               ),
             ],
+          ),
+          Expanded(
+          flex:1,
+          child: 
+          Text(' '),
           ),
         ],
       ),
