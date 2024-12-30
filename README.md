@@ -45,5 +45,5 @@ Sequence Diagram
 
 
 [Activity Diagram]
-# Screenshot
+# Screenshot my first app
 ![Image](<Screenshot.jpg>)
