@@ -45,3 +45,5 @@ Sequence Diagram
 
 
 [Activity Diagram]
+# Screenshot
+#![Image](<Screenshot.jpg>)
