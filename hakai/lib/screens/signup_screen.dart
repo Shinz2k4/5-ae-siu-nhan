@@ -21,7 +21,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       setState(() {
         _errorMessage = "Registration successful!";
       });
-      // Bạn có thể xử lý thêm, như lưu thông tin vào database
     }
   }
 
