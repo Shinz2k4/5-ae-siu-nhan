@@ -55,7 +55,7 @@ Sequence Diagram
 ![Image](<./hakai/assets/Screenshot 2025-01-06 143857.png>)
 
 # Code chính của User grid 
-'''
+```
 class User {
   String username;
   String password;
@@ -126,4 +126,3 @@ class UserScreen extends StatelessWidget {
   }
 }
 
-'''
