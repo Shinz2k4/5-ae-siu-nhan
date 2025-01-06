@@ -71,11 +71,11 @@ class User {
 
 class UserScreen extends StatelessWidget {
   final List<User> users = [
-    User(username: "Tuấn", password: "123", role: "Admin"),
-    User(username: "Dũng", password: "456", role: "Editor"),
-    User(username: "Thành", password: "789", role: "Viewer"),
-    User(username: "Quang", password: "101", role: "Contributor"),
-    User(username: "Hiếu", password: "202", role: "Guest"),
+    User(username: "Thanh", password: "123", role: "Admin"),
+    User(username: "Minh", password: "45346", role: "Editor"),
+    User(username: "Dung", password: "789", role: "Viewer"),
+    User(username: "Phu", password: "101", role: "Contributor"),
+    User(username: "Son", password: "202", role: "Guest"),
   ];
 
   @override
