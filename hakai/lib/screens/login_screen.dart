@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
-import 'signup_screen.dart'; 
+import 'signup_screen.dart';
+import 'forget_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -11,19 +13,25 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  final String _correctEmail = "admin";
-  final String _correctPassword = "1";
-
   String _errorMessage = "";
 
-  void _login() {
-    if (_emailController.text == _correctEmail &&
-        _passwordController.text == _correctPassword) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage()),
+  // Đăng nhập với Firebase Authentication
+  Future<void> _login() async {
+    try {
+      // Gọi Firebase Auth để đăng nhập
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
       );
-    } else {
+
+      // Chuyển đến trang Home nếu đăng nhập thành công
+      if (userCredential.user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+      }
+    } catch (e) {
       setState(() {
         _errorMessage = "Invalid email or password. Please try again.";
       });
@@ -71,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: _login,
                 child: Text("Log in"),
               ),
-              SizedBox(height: 10),
+              SizedBox(height: 15),
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -81,6 +89,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 },
                 child: Text("Don't have an account? Sign up here."),
               ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) =>ForgetPasswordScreen()),
+                  );
+                }, 
+                child: Text('Forgot password')
+                ),
             ],
           ),
         ),
