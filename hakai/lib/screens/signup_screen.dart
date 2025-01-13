@@ -13,9 +13,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
 
+
   String? _selectedGender;
   DateTime? _selectedBirthDate;
   String _errorMessage = "";
+  int gem = 0;
+  String role = "user";
 
   Future<void> _pickBirthDate() async {
     DateTime? pickedDate = await showDatePicker(
@@ -65,6 +68,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
           'birthDate': _selectedBirthDate!.toIso8601String(),
           'email': _emailController.text,
           'createdAt': Timestamp.now(),
+          'gem' : gem,
+          'role': role,
         });
 
         setState(() {

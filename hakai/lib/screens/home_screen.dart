@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:hakai/screens/screens.dart';
 
 void main() {
   runApp(MyApp());
@@ -23,15 +26,14 @@ class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    Center(child: 
-    Text("vào phần drawer và bấm vào user grid hoặc vào user tại bottom navigation bar item để xem user grid",
-    style: TextStyle(
-      fontSize: 40,
-      color: Colors.red,
+    Center(
+      child: Text(
+        "Vào phần drawer và bấm vào Profile hoặc User Grid để xem và cập nhật thông tin.",
+        style: TextStyle(fontSize: 18, color: Colors.red),
       ),
-    )),
-    Center(child: Text("Search Page")),
-    UserScreen(), 
+    ),
+    SearchScreen(),
+    UserScreen(),
   ];
 
   @override
@@ -40,39 +42,246 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         backgroundColor: Colors.orange,
         title: Text('Home Page'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(FirebaseAuth.instance.currentUser?.uid)
+                  .get(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Row(
+                    children: [
+                      CircularProgressIndicator(color: Colors.white),
+                    ],
+                  );
+                }
+                if (snapshot.hasError) {
+                  return Row(
+                    children: [
+                      Icon(Icons.error, color: Colors.red),
+                    ],
+                  );
+                }
+
+                if (!snapshot.hasData || !snapshot.data!.exists) {
+                  return Row(
+                    children: [
+                      Text(
+                        '0',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(width: 5),
+                      Icon(
+                        Icons.diamond,
+                        color: Colors.white,
+                      ),
+                    ],
+                  );
+                }
+
+                // Lấy số gem từ Firestore
+                final int gems = snapshot.data!.get('gem') ?? 0;
+
+                return Row(
+                  children: [
+                    Text(
+                      gems.toString(),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(width: 5),
+                    Icon(
+                      Icons.diamond,
+                      color: Colors.white,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+        
       ),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(color: Colors.green),
-              accountName: const Text("Đăng Minh"),
-              accountEmail: const Text("daikaminhz178@gmail.com"),
-              currentAccountPicture: const CircleAvatar(
-                backgroundColor: Colors.blue,
-                child: Text("ĐM", style: TextStyle(fontSize: 30)),
-              ),
+            FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+              future: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(FirebaseAuth.instance.currentUser?.uid)
+                  .get(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return UserAccountsDrawerHeader(
+                    decoration: BoxDecoration(color: Colors.green),
+                    accountName: Text("Loading..."),
+                    accountEmail: Text("Loading..."),
+                    currentAccountPicture: CircleAvatar(
+                      backgroundColor: Colors.blue,
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  );
+                }
+
+                final data = snapshot.data?.data();
+                String role = data?['role'] ?? 'user'; // Vai trò mặc định là user
+                Color roleColor;
+
+                switch (role.toLowerCase()) {
+                  case 'admin':
+                    roleColor = Colors.red;
+                    break;
+                  case 'seller':
+                    roleColor = Colors.amber;
+                    break;
+                  default:
+                    roleColor = Colors.blue; // user
+                }
+
+                return UserAccountsDrawerHeader(
+                  decoration: BoxDecoration(color: Colors.green),
+                  accountName: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(data?['fullName'] ?? 'No Name'),
+                      SizedBox(width: 5), // Khoảng cách giữa tên và vai trò
+                      Container(
+                        padding: EdgeInsets.symmetric(vertical: 2, horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: roleColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          role.toUpperCase(), // Hiển thị vai trò (in hoa)
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  accountEmail: Text(data?['email'] ?? 'No Email'),
+                  currentAccountPicture: CircleAvatar(
+                    backgroundImage: data?['avatarUrl'] != null
+                        ? NetworkImage(data!['avatarUrl'])
+                        : null,
+                    child: data?['avatarUrl'] == null
+                        ? Text(
+                            data?['fullName']
+                                    ?.split(' ')
+                                    .last
+                                    .substring(0, 1)
+                                    .toUpperCase() ??
+                                '',
+                            style: TextStyle(fontSize: 30),
+                          )
+                        : null,
+                  ),
+                );
+              },
             ),
+            // Các mục chung cho mọi người
             ListTile(
-              leading: Icon(Icons.grid_view),
-              title: Text('User grid'),
+              leading: Icon(Icons.person,
+                  color: const Color.fromARGB(255, 77, 159, 252), size: 30),
+              title: Text('Profile'),
               onTap: () {
                 Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => UserScreen()),
+                  MaterialPageRoute(builder: (context) => ProfileScreen()),
                 );
               },
             ),
             ListTile(
-              leading: Icon(Icons.logout),
+              leading: Icon(Icons.star, color: Colors.amber, size: 30),
+              title: Text('Premium'),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => PremiumScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.account_balance_wallet, color: Colors.green, size: 30),
+              title: Text('Nạp tiền'),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => DepositScreen()),
+                );
+              },
+            ),
+            // Mục thêm theo vai trò
+            FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+              future: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(FirebaseAuth.instance.currentUser?.uid)
+                  .get(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  final data = snapshot.data?.data();
+                  String role = data?['role'] ?? 'user';
+
+                  if (role.toLowerCase() == 'admin') {
+                    return ListTile(
+                      leading: Icon(Icons.group_add, color: Colors.red, size: 30),
+                      title: Text('Cấp quyền Seller'),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => GrantSellerScreen()),
+                        );
+                      },
+                    );
+                  } else if (role.toLowerCase() == 'seller') {
+                    return ListTile(
+                      leading: Icon(Icons.store, color: Colors.amber, size: 30),
+                      title: Text('Cửa hàng của bạn'),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => StoreScreen()),
+                        );
+                      },
+                    );
+                  } else {
+                    return ListTile(
+                      leading: Icon(Icons.business_center, color: Colors.blue, size: 30),
+                      title: Text('Đăng ký làm Seller'),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => ApplySellerScreen()),
+                        );
+                      },
+                    );
+                  }
+                }
+                return SizedBox.shrink(); // Không hiển thị gì khi đang tải
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.logout, color: const Color.fromARGB(255, 0, 0, 0), size: 30),
               title: Text('Log Out'),
               onTap: () {
+                FirebaseAuth.instance.signOut();
                 Navigator.of(context).pushReplacementNamed('/');
               },
             ),
           ],
         ),
       ),
+
+
+
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -91,72 +300,131 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class User {
-  String username;
-  String password;
-  String role;
-
-  User({required this.username, required this.password, required this.role});
-
+class SearchScreen extends StatelessWidget {
   @override
-  String toString() {
-    return 'User(username: $username, role: $role)';
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Search"),
+        automaticallyImplyLeading: false,
+      ),
+      body: Center(child: Text("Search Screen")),
+    );
   }
 }
 
 class UserScreen extends StatelessWidget {
-  final List<User> users = [
-    User(username: "Tuấn", password: "123", role: "Admin"),
-    User(username: "Dũng", password: "456", role: "Editor"),
-    User(username: "Thành", password: "789", role: "Viewer"),
-    User(username: "Quang", password: "101", role: "Contributor"),
-    User(username: "Hiếu", password: "202", role: "Guest"),
-  ];
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("User Grid"),
+      ),
+      body: Center(child: Text("User Grid Screen")),
+    );
+  }
+}
+
+class ProfileScreen extends StatefulWidget {
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final TextEditingController _nameController = TextEditingController();
+  String? _avatarUrl;
+
+  Future<void> _loadProfile() async {
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser?.uid)
+        .get();
+    final data = userDoc.data();
+    if (data != null) {
+      setState(() {
+        _nameController.text = data['fullName'] ?? '';
+        _avatarUrl = data['avatarUrl'];
+      });
+    }
+  }
+
+  Future<void> _updateProfile() async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser?.uid)
+        .update({'fullName': _nameController.text});
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Profile updated successfully!")),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-  title: Text("User Grid"),
-  automaticallyImplyLeading: false,
-  leading: IconButton(
-    onPressed: () {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => HomePage()),
-      );
-    },
-    icon: Icon(Icons.arrow_left_sharp),
-  ),
-),
-
+        title: Text("Profile"),
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 3,
-            crossAxisSpacing: 10,
-          ),
-          itemCount: users.length,
-          itemBuilder: (context, index) {
-            final user = users[index];
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.blue[100],
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.blue, width: 2),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 50,
+              backgroundImage: _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
+              child: _avatarUrl == null
+                  ? Icon(Icons.person, size: 50)
+                  : null,
+            ),
+            SizedBox(height: 20),
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: "Full Name",
+                border: OutlineInputBorder(),
               ),
-              child: Center(
-                child: Text(
-                  "Username: ${user.username}\nRole: ${user.role}",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            );
-          },
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _updateProfile,
+              child: Text("Update Profile"),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+
+class PremiumScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('premium'),
+
+        )
+      
+    );
+  }
+}
+
+
+class DepositScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('deposit'),
+
+        )
+      
     );
   }
 }
