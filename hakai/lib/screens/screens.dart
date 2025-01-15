@@ -154,8 +154,8 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
         bottom: TabBar(
           controller: _tabController,
           tabs: [
-            Tab(text: 'Truyện tranh'),
             Tab(text: 'Truyện chữ'),
+            Tab(text: 'Truyện tranh'),
             Tab(text: 'Nhạc'),
             Tab(text: 'Video'),
           ],
@@ -164,8 +164,8 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       body: TabBarView(
         controller: _tabController,
         children: [
-          Center(child: Text('Chức năng truyện tranh đang phát triển...')),
           _buildProductList(textProducts),
+          Center(child: Text('Chức năng truyện tranh đang phát triển...')),
           Center(child: Text('Chức năng nhạc đang phát triển...')),
           Center(child: Text('Chức năng video đang phát triển...')),
         ],
@@ -266,14 +266,14 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
                                       '${product['price']}',
                                       style: TextStyle(
                                         color: Colors.grey,
-                                        fontSize: screenstextwidth * 0.025, // Kích thước chữ co giãn
+                                        fontSize: screenstextwidth * 0.025, 
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     SizedBox(width: screenstextwidth * 0.01), 
                                     Icon(
-                                      Icons.diamond, // Hoặc bạn có thể dùng một icon khác phù hợp
+                                      Icons.diamond,
                                       color: Colors.grey,
                                       size: screenstextwidth * 0.03, // Kích thước icon theo tỷ lệ màn hình
                                     ),
@@ -368,8 +368,8 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
                         });
                       },
                       items: [
-                        DropdownMenuItem(value: 'comic', child: Text('Truyện tranh')),
                         DropdownMenuItem(value: 'text', child: Text('Truyện chữ')),
+                        DropdownMenuItem(value: 'comic', child: Text('Truyện tranh')),
                         DropdownMenuItem(value: 'music', child: Text('Nhạc')),
                         DropdownMenuItem(value: 'video', child: Text('Video')),
                       ],

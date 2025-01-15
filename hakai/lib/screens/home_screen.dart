@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hakai/screens/screens.dart';
+import 'package:hakai/screens/wordStoryScreen.dart';
 
 void main() {
   runApp(MyApp());
@@ -26,14 +27,10 @@ class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    Center(
-      child: Text(
-        "Vào phần drawer và bấm vào Profile hoặc User Grid để xem và cập nhật thông tin.",
-        style: TextStyle(fontSize: 18, color: Colors.red),
-      ),
-    ),
-    SearchScreen(),
-    UserScreen(),
+    WordStoryScreen(),
+    ComicScreen(),
+    MusicScreen(),
+    VideoScreen()
   ];
 
   @override
@@ -282,6 +279,9 @@ class _HomePageState extends State<HomePage> {
 
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey,
         currentIndex: _currentIndex,
         onTap: (int index) {
           setState(() {
@@ -289,36 +289,49 @@ class _HomePageState extends State<HomePage> {
           });
         },
         items: const [
-          BottomNavigationBarItem(label: "Home", icon: Icon(Icons.home)),
-          BottomNavigationBarItem(label: "Search", icon: Icon(Icons.search)),
-          BottomNavigationBarItem(label: "Users Grid", icon: Icon(Icons.people)),
+          BottomNavigationBarItem(label: "Truyện Chữ", icon: Icon(Icons.menu_book)),
+          BottomNavigationBarItem(label: "Truyện Tranh", icon: Icon(Icons.art_track )),
+          BottomNavigationBarItem(label: "Nhạc", icon: Icon(Icons.audiotrack)),
+          BottomNavigationBarItem(label: "Video", icon: Icon(Icons.movie))
         ],
       ),
     );
   }
 }
 
-class SearchScreen extends StatelessWidget {
+
+class ComicScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Search"),
+        title: Text("Comic Screen"),
         automaticallyImplyLeading: false,
       ),
-      body: Center(child: Text("Search Screen")),
+      body: Center(child: Text("Comic Screen")),
     );
   }
 }
 
-class UserScreen extends StatelessWidget {
+class MusicScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("User Grid"),
+        title: Text("Music Screen"),
       ),
-      body: Center(child: Text("User Grid Screen")),
+      body: Center(child: Text("Music Screen")),
+    );
+  }
+}
+class VideoScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Video Screen"),
+      ),
+      body: Center(child: Text("Video Screen")),
     );
   }
 }
