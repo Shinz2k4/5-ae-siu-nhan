@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'dart:io';
-import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 
 class ApplySellerScreen extends StatelessWidget {
@@ -16,209 +12,6 @@ class ApplySellerScreen extends StatelessWidget {
         title: Text('Đăng ký làm Seller'),
       ),
     );
-  }
-}
-class StoreScreen extends StatefulWidget {
-  @override
-  _StoreScreenState createState() => _StoreScreenState();
-}
-
-class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  List<Map<String, dynamic>> comicProducts = [];
-  List<Map<String, dynamic>> textProducts = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 4, vsync: this);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Cửa hàng của bạn'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: 'Truyện tranh'),
-            Tab(text: 'Truyện chữ'),
-            Tab(text: 'Nhạc'),
-            Tab(text: 'Video'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildProductList(comicProducts),
-          _buildProductList(textProducts),
-          Center(child: Text('Chức năng nhạc đang phát triển...')),
-          Center(child: Text('Chức năng video đang phát triển...')),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddProductDialog(),
-        child: Icon(Icons.add),
-      ),
-    );
-  }
-
-  Widget _buildProductList(List<Map<String, dynamic>> products) {
-    return products.isEmpty
-        ? Center(child: Text('Chưa có sản phẩm nào.'))
-        : ListView.builder(
-            itemCount: products.length,
-            itemBuilder: (context, index) {
-              final product = products[index];
-              return Card(
-                margin: EdgeInsets.all(8.0),
-                child: ListTile(
-                  leading: product['coverImage'] != null
-                      ? Image.network(product['coverImage'], width: 50, height: 50, fit: BoxFit.cover)
-                      : Icon(Icons.image, size: 50),
-                  title: Text(product['name']),
-                  subtitle: Text(product['description']),
-                  trailing: Text('${product['price']} Diamonds'),
-                ),
-              );
-            },
-          );
-  }
-
-  Future<void> _showAddProductDialog() async {
-    String? productType;
-    String name = '';
-    String description = '';
-    int price = 0;
-    Uint8List? coverImage;
-    List<Uint8List> images = [];
-    File? contentFile;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Thêm sản phẩm', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      value: productType,
-                      onChanged: (value) {
-                        setState(() {
-                          productType = value;
-                        });
-                      },
-                      items: [
-                        DropdownMenuItem(value: 'comic', child: Text('Truyện tranh')),
-                        DropdownMenuItem(value: 'text', child: Text('Truyện chữ')),
-                      ],
-                      decoration: InputDecoration(
-                        labelText: 'Chọn loại sản phẩm',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      onChanged: (value) => name = value,
-                      decoration: InputDecoration(labelText: 'Tên sản phẩm', border: OutlineInputBorder()),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      onChanged: (value) => description = value,
-                      decoration: InputDecoration(labelText: 'Mô tả', border: OutlineInputBorder()),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) => price = int.tryParse(value) ?? 0,
-                      decoration: InputDecoration(labelText: 'Giá (Diamonds)', border: OutlineInputBorder()),
-                    ),
-                    SizedBox(height: 16),
-                    TextButton(
-                      onPressed: () async {
-                        final picker = ImagePicker();
-                        final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-                        if (pickedFile != null) {
-                          final bytes = await pickedFile.readAsBytes();
-                          setState(() => coverImage = bytes);
-                        }
-                      },
-                      child: Text('Thêm ảnh bìa'),
-                    ),
-                    coverImage != null
-                        ? Padding(
-                            padding: const EdgeInsets.all(4.0),
-                            child: Image.memory(coverImage!, width: 100, height: 100),
-                          )
-                        : SizedBox(),
-                    SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (productType == null || name.isEmpty || description.isEmpty || price <= 0 || coverImage == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin!')));
-                          return;
-                        }
-
-                        try {
-                          final user = FirebaseAuth.instance.currentUser;
-                          if (user == null) throw Exception('User not logged in');
-                          final sellerId = user.uid;
-
-                          final coverImageUrl = await _uploadToStorage('coverImages', coverImage!);
-
-                          final data = {
-                            'name': name,
-                            'description': description,
-                            'price': price,
-                            'coverImage': coverImageUrl,
-                            'sellerId': sellerId,
-                            'createdAt': FieldValue.serverTimestamp(),
-                          };
-
-                          await FirebaseFirestore.instance
-                              .collection('products')
-                              .doc(sellerId)
-                              .collection(productType == 'comic' ? 'comicProducts' : 'textProducts')
-                              .add(data);
-
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sản phẩm đã được thêm!')));
-                        } catch (e) {
-                          print('Error adding product: $e');
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi khi thêm sản phẩm: $e')));
-                        }
-                      },
-                      child: Text('Thêm sản phẩm'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  Future<String> _uploadToStorage(String folder, Uint8List bytes) async {
-    try {
-      final ref = FirebaseStorage.instance.ref().child(folder).child('${DateTime.now()}.jpg');
-      final uploadTask = ref.putData(bytes);
-      final snapshot = await uploadTask.whenComplete(() => null);
-      return await snapshot.ref.getDownloadURL();
-    } catch (e) {
-      throw Exception('Lỗi khi tải lên Firebase Storage: $e');
-    }
   }
 }
 
@@ -274,9 +67,9 @@ class GrantSellerScreen extends StatelessWidget {
     }
 
     try {
-      // Cập nhật quyền role trong Firestore thành seller
+
       await FirebaseFirestore.instance.collection('users').doc(userId).update({
-        'role': 'seller', // Thay đổi quyền role thành seller
+        'role': 'seller',
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -300,9 +93,8 @@ class GrantSellerScreen extends StatelessWidget {
     }
 
     try {
-      // Cập nhật quyền role trong Firestore thành user (xóa quyền seller)
       await FirebaseFirestore.instance.collection('users').doc(userId).update({
-        'role': 'user', // Thay đổi quyền role thành user
+        'role': 'user', 
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -314,5 +106,580 @@ class GrantSellerScreen extends StatelessWidget {
         SnackBar(content: Text('Có lỗi xảy ra: $e')),
       );
     }
+  }
+}
+
+
+
+
+class StoreScreen extends StatefulWidget {
+  @override
+  _StoreScreenState createState() => _StoreScreenState();
+}
+
+class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  List<Map<String, dynamic>> textProducts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+    _fetchTextProducts();
+  }
+
+  Future<void> _fetchTextProducts() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('products')
+        .doc(user.uid)
+        .collection('textProducts')
+        .get();
+
+        setState(() {
+          textProducts = querySnapshot.docs
+              .map((doc) => {'id': doc.id, ...doc.data().cast<String, dynamic>()})
+              .toList();
+        });
+
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Cửa hàng của bạn'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: [
+            Tab(text: 'Truyện tranh'),
+            Tab(text: 'Truyện chữ'),
+            Tab(text: 'Nhạc'),
+            Tab(text: 'Video'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          Center(child: Text('Chức năng truyện tranh đang phát triển...')),
+          _buildProductList(textProducts),
+          Center(child: Text('Chức năng nhạc đang phát triển...')),
+          Center(child: Text('Chức năng video đang phát triển...')),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddProductDialog(),
+        child: Icon(Icons.add),
+      ),
+    );
+  }
+
+Widget _buildProductList(List<Map<String, dynamic>> products) {
+  return products.isEmpty
+      ? Center(child: Text('Chưa có sản phẩm nào.'))
+      : LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            int crossAxisCount = screenWidth < 600 ? 2 : 5;
+            double screenstextwidth = screenWidth < 600 ? screenWidth*1 : screenWidth*0.4;
+            double childAspectRatio =
+                (screenWidth / crossAxisCount) / (screenWidth / crossAxisCount * 1.5);
+
+            return GridView.builder(
+              padding: EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 8.0),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 8.0,
+                mainAxisSpacing: 8.0,
+                childAspectRatio: childAspectRatio,
+              ),
+              itemCount: products.length,
+              itemBuilder: (context, index) {
+                final product = products[index];
+                return GestureDetector(
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.vertical(top: Radius.circular(20)),
+                      ),
+                      builder: (context) {
+                        return _buildProductDetails(product);
+                      },
+                    );
+                  },
+                  child: Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          flex: 4,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(10),
+                            ),
+                            child: Image.network(
+                              product['image'] ??
+                                  'https://via.placeholder.com/150',
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            ),
+                          ),
+                        ),
+                      
+                        Expanded(
+                          flex: 1,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.02, 
+                              vertical: screenWidth * 0.01,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                
+                                Flexible(
+                                  child: Text(
+                                    product['name'],
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: screenstextwidth * 0.03, 
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                SizedBox(height: screenstextwidth * 0.01),
+                                Flexible(
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      '${product['price']}',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: screenstextwidth * 0.025, // Kích thước chữ co giãn
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    SizedBox(width: screenstextwidth * 0.01), 
+                                    Icon(
+                                      Icons.diamond, // Hoặc bạn có thể dùng một icon khác phù hợp
+                                      color: Colors.grey,
+                                      size: screenstextwidth * 0.03, // Kích thước icon theo tỷ lệ màn hình
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+}
+
+
+  Widget _buildProductDetails(Map<String, dynamic> product) {
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          product['name'],
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Tác giả: ${product['author'] ?? 'Không rõ'}',
+          style: TextStyle(fontSize: 16),
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Mô tả: ${product['description'] ?? 'Không có mô tả'}',
+          style: TextStyle(fontSize: 14),
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Đánh giá: ${product['rating']?.toStringAsFixed(1) ?? 'Chưa có đánh giá'} ⭐',
+          style: TextStyle(fontSize: 14, color: Colors.orange),
+        ),
+        SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).pop(); // Đóng modal
+            // Xử lý sự kiện đọc nội dung truyện
+            print("Reading ${product['name']}...");
+          },
+          child: Text('Đọc truyện'),
+        ),
+      ],
+    ),
+  );
+}
+
+
+
+  Future<void> _showAddProductDialog() async {
+    String? productType = 'text';
+    String name = '';
+    String description = '';
+    int price = 0;
+    String content = '';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Thêm sản phẩm', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: productType,
+                      onChanged: (value) {
+                        setState(() {
+                          productType = value;
+                        });
+                      },
+                      items: [
+                        DropdownMenuItem(value: 'comic', child: Text('Truyện tranh')),
+                        DropdownMenuItem(value: 'text', child: Text('Truyện chữ')),
+                        DropdownMenuItem(value: 'music', child: Text('Nhạc')),
+                        DropdownMenuItem(value: 'video', child: Text('Video')),
+                      ],
+                      decoration: InputDecoration(
+                        labelText: 'Chọn loại sản phẩm',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    TextField(
+                      onChanged: (value) => name = value,
+                      decoration: InputDecoration(labelText: 'Tên sản phẩm', border: OutlineInputBorder()),
+                    ),
+                    SizedBox(height: 16),
+                    TextField(
+                      onChanged: (value) => description = value,
+                      decoration: InputDecoration(labelText: 'Mô tả', border: OutlineInputBorder()),
+                    ),
+                    SizedBox(height: 16),
+                    TextField(
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) => price = int.tryParse(value) ?? 0,
+                      decoration: InputDecoration(labelText: 'Giá (Diamonds)', border: OutlineInputBorder()),
+                    ),
+                    SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ContentEditorScreen(initialContent: content),
+                          ),
+                        );
+
+                        if (result != null) {
+                          content = result;
+                        }
+                      },
+                      child: Text('Nội dung'),
+                    ),
+                    SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (productType == null || name.isEmpty || description.isEmpty || price <= 0 || content.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin!')));
+                          return;
+                        }
+
+                        try {
+                          final user = FirebaseAuth.instance.currentUser;
+                          
+                          if (user == null) throw Exception('User not logged in');
+                          final sellerId = user.uid;
+                         
+                          final data = {
+                            'name': name,
+                            'description': description,
+                            'price': price,
+                            'content': content,
+                            'sellerId': sellerId,
+                            'createdAt': FieldValue.serverTimestamp(),
+                          };
+
+                          await FirebaseFirestore.instance
+                              .collection('products')
+                              .doc(sellerId)
+                              .collection('textProducts')
+                              .add(data);
+
+                          _fetchTextProducts();
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sản phẩm đã được thêm!')));
+                        } catch (e) {
+                          print('Error adding product: $e');
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi khi thêm sản phẩm: $e')));
+                        }
+                      },
+                      child: Text('Thêm sản phẩm'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class ContentEditorScreen extends StatefulWidget {
+  final String? initialContent;
+
+  ContentEditorScreen({this.initialContent});
+
+  @override
+  _ContentEditorScreenState createState() => _ContentEditorScreenState();
+}
+
+class _ContentEditorScreenState extends State<ContentEditorScreen> {
+  late quill.QuillController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    try {
+      if (widget.initialContent != null && widget.initialContent!.isNotEmpty) {
+        final doc = quill.Document()..insert(0, widget.initialContent!);
+        _controller = quill.QuillController(
+          document: doc,
+          selection: TextSelection.collapsed(offset: 0),
+        );
+      } else {
+        _controller = quill.QuillController.basic();
+      }
+    } catch (e) {
+      print("Error initializing content: $e");
+      _controller = quill.QuillController.basic();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Chỉnh sửa nội dung'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _saveContent();
+            },
+            child: Text(
+              'LƯU',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          _buildCustomToolbar(),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: quill.QuillEditor(
+                controller: _controller,
+                scrollController: ScrollController(),
+                focusNode: FocusNode(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomToolbar() {
+    return Container(
+      color: Colors.grey[200],
+      padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      child: Row(
+        children: [
+          IconButton(
+            icon: Icon(Icons.format_bold),
+            onPressed: () {
+              _controller.formatSelection(quill.Attribute.bold);
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.format_italic),
+            onPressed: () {
+              _controller.formatSelection(quill.Attribute.italic);
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.format_color_text),
+            onPressed: () {
+              _changeTextColor();
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.format_size),
+            onPressed: () {
+              _changeFontSize();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _changeTextColor() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Chọn màu chữ'),
+        content: Wrap(
+          children: [
+            _buildColorButton(Colors.black),
+            _buildColorButton(Colors.red),
+            _buildColorButton(Colors.green),
+            _buildColorButton(Colors.blue),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildColorButton(Color color) {
+    return IconButton(
+      icon: Icon(Icons.circle, color: color),
+      onPressed: () {
+        _controller.formatSelection(
+          quill.Attribute.fromKeyValue(
+            'color',
+            '#${color.value.toRadixString(16).substring(2)}',
+          ),
+        );
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  void _changeFontSize() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Chọn kích thước chữ'),
+        content: Wrap(
+          children: [10, 14, 18, 24, 32].map((size) {
+            return TextButton(
+              onPressed: () {
+                _controller.formatSelection(
+                  quill.Attribute.fromKeyValue('size', size.toString()),
+                );
+                Navigator.pop(context);
+              },
+              child: Text(
+                size.toString(),
+                style: TextStyle(fontSize: size.toDouble()),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  void _saveContent() {
+    try {
+      final content = _controller.document.toPlainText();
+      Navigator.pop(context, content);
+    } catch (e) {
+      print("Error saving content: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không thể lưu nội dung. Vui lòng thử lại!')),
+      );
+    }
+  }
+}
+
+
+class AddProductScreen extends StatefulWidget {
+  @override
+  _AddProductScreenState createState() => _AddProductScreenState();
+}
+
+class _AddProductScreenState extends State<AddProductScreen> {
+  String _content = "";
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Thêm sản phẩm'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            TextButton(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ContentEditorScreen(
+                      initialContent: _content,
+                    ),
+                  ),
+                );
+                if (result != null) {
+                  setState(() {
+                    _content = result;
+                  });
+                }
+              },
+              child: Text('Chỉnh sửa nội dung'),
+            ),
+            SizedBox(height: 16),
+            Text('Nội dung hiện tại:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Container(
+              padding: EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+              ),
+              child: Text(_content.isEmpty ? 'Chưa có nội dung' : _content),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

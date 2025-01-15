@@ -141,10 +141,8 @@ class _HomePageState extends State<HomePage> {
                 switch (role.toLowerCase()) {
                   case 'admin':
                     roleColor = Colors.red;
-                    break;
                   case 'seller':
                     roleColor = Colors.amber;
-                    break;
                   default:
                     roleColor = Colors.blue; // user
                 }
