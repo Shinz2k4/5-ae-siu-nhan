@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:hakai/screens/image.dart';
+import 'dart:typed_data';
+import 'dart:convert';
 
 
 class ApplySellerScreen extends StatelessWidget {
@@ -221,20 +224,26 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Expanded(
-                          flex: 4,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(10),
-                            ),
-                            child: Image.network(
-                              product['image'] ??
-                                  'https://via.placeholder.com/150',
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                            ),
+                        flex: 4,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(10),
                           ),
+                          child: product['imagecover'] != null && product['imagecover']!.isNotEmpty
+                              ? Image.memory(
+                                  base64Decode(product['imagecover']!),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                )
+                              : Image.network(
+                                  'https://via.placeholder.com/150', // Placeholder nếu không có ảnh
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                ),
                         ),
+                      ),
                       
                         Expanded(
                           flex: 1,
@@ -275,7 +284,7 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
                                     Icon(
                                       Icons.diamond,
                                       color: Colors.grey,
-                                      size: screenstextwidth * 0.03, // Kích thước icon theo tỷ lệ màn hình
+                                      size: screenstextwidth * 0.03, 
                                     ),
                                   ],
                                 ),
@@ -336,7 +345,20 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
   );
 }
 
+ String? _imageBase64; 
 
+  Future<void> _uploadImage() async {
+    final base64String = await ImageHelper.pickImageAndConvertToBase64();
+    if (base64String != null) {
+      setState(() {
+        _imageBase64 = base64String; 
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không chọn được ảnh!')),
+      );
+    }
+  }
 
   Future<void> _showAddProductDialog() async {
     String? productType = 'text';
@@ -395,6 +417,11 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
                       decoration: InputDecoration(labelText: 'Giá (Diamonds)', border: OutlineInputBorder()),
                     ),
                     SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _uploadImage,
+                          child: Text('Tải ảnh từ thư viện'),
+                        ),
+                    SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () async {
                         final result = await Navigator.push(
@@ -431,6 +458,7 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
                             'content': content,
                             'sellerId': sellerId,
                             'createdAt': FieldValue.serverTimestamp(),
+                            'imagecover': _imageBase64,
                           };
 
                           await FirebaseFirestore.instance

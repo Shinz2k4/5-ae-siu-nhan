@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hakai/screens/screens.dart';
+import 'dart:convert';
 
 class WordStoryScreen extends StatefulWidget {
   @override
@@ -84,20 +85,26 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Expanded(
-                          flex: 4,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(10),
-                            ),
-                            child: Image.network(
-                              product['image'] ??
-                                  'https://via.placeholder.com/150',
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                            ),
+                        flex: 4,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(10),
                           ),
+                          child: product['imagecover'] != null && product['imagecover']!.isNotEmpty
+                              ? Image.memory(
+                                  base64Decode(product['imagecover']!),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                )
+                              : Image.network(
+                                  'https://via.placeholder.com/150', // Placeholder nếu không có ảnh
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                ),
                         ),
+                      ),
                       
                         Expanded(
                           flex: 1,
@@ -138,7 +145,7 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
                                     Icon(
                                       Icons.diamond,
                                       color: Colors.grey,
-                                      size: screenstextwidth * 0.03, // Kích thước icon theo tỷ lệ màn hình
+                                      size: screenstextwidth * 0.03, 
                                     ),
                                   ],
                                 ),
