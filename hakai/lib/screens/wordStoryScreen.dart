@@ -19,7 +19,7 @@ class _WordStoryScreenState extends State<WordStoryScreen> {
 
   Future<void> _fetchAllTextProducts() async {
     final querySnapshot = await FirebaseFirestore.instance
-        .collectionGroup('textProducts')
+        .collectionGroup('seriesChap')
         .get();
 
     setState(() {

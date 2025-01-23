@@ -136,6 +136,8 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
         .collection('products')
         .doc(user.uid)
         .collection('textProducts')
+        .doc('178')
+        .collection('seriesChap')
         .get();
 
         setState(() {
