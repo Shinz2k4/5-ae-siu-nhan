@@ -5,8 +5,8 @@ import 'package:image_picker/image_picker.dart';
 class ImageHelper {
   // Hàm chọn ảnh từ thư viện và chuyển đổi thành Base64
   static Future<String?> pickImageAndConvertToBase64() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       // Đọc ảnh dưới dạng byte
       final bytes = await image.readAsBytes();

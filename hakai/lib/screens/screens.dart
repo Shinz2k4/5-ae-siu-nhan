@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:hakai/screens/image.dart';
-import 'dart:typed_data';
 import 'dart:convert';
 
 
@@ -79,7 +78,6 @@ class GrantSellerScreen extends StatelessWidget {
         SnackBar(content: Text('Đã cấp quyền Seller thành công!')),
       );
     } catch (e) {
-      // Nếu có lỗi xảy ra
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Có lỗi xảy ra: $e')),
       );
@@ -104,7 +102,6 @@ class GrantSellerScreen extends StatelessWidget {
         SnackBar(content: Text('Đã xóa quyền Seller thành công!')),
       );
     } catch (e) {
-      // Nếu có lỗi xảy ra
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Có lỗi xảy ra: $e')),
       );
@@ -237,7 +234,7 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
                                   height: double.infinity,
                                 )
                               : Image.network(
-                                  'https://via.placeholder.com/150', // Placeholder nếu không có ảnh
+                                  'https://via.placeholder.com/150', 
                                   fit: BoxFit.cover,
                                   width: double.infinity,
                                   height: double.infinity,
@@ -272,19 +269,43 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
                                 child: Row(
                                   children: [
                                     Text(
-                                      '${product['price']}',
+                                      '${product['rate']?.toStringAsFixed(1) ?? '0.0'}', // Hiển thị đánh giá
                                       style: TextStyle(
                                         color: Colors.grey,
-                                        fontSize: screenstextwidth * 0.025, 
+                                        fontSize: screenstextwidth * 0.025,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    SizedBox(width: screenstextwidth * 0.01), 
-                                    Icon(
-                                      Icons.diamond,
-                                      color: Colors.grey,
-                                      size: screenstextwidth * 0.03, 
+                                    SizedBox(width: screenstextwidth * 0.01),
+                                    Row(
+                                      children: [
+                                        ...List.generate(5, (index) {
+                                          final rating = product['rate'] ?? 0.0;
+                                          if (index < rating.floor()) {
+                                            // Sao đầy
+                                            return Icon(
+                                              Icons.star,
+                                              color: Colors.amber,
+                                              size: screenstextwidth * 0.03,
+                                            );
+                                          } else if (index < rating && rating - index > 0) {
+                                            // Sao một phần
+                                            return Icon(
+                                              Icons.star_half,
+                                              color: Colors.amber,
+                                              size: screenstextwidth * 0.03,
+                                            );
+                                          } else {
+                                            // Sao trống
+                                            return Icon(
+                                              Icons.star_border,
+                                              color: Colors.grey,
+                                              size: screenstextwidth * 0.03,
+                                            );
+                                          }
+                                        }),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -318,7 +339,7 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
         ),
         SizedBox(height: 8),
         Text(
-          'Tác giả: ${product['author'] ?? 'Không rõ'}',
+          'Tác giả: ${product['authorName'] ?? 'Không rõ'}',
           style: TextStyle(fontSize: 16),
         ),
         SizedBox(height: 8),
@@ -334,8 +355,7 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
         SizedBox(height: 16),
         ElevatedButton(
           onPressed: () {
-            Navigator.of(context).pop(); // Đóng modal
-            // Xử lý sự kiện đọc nội dung truyện
+            Navigator.of(context).pop();
             print("Reading ${product['name']}...");
           },
           child: Text('Đọc truyện'),
@@ -345,7 +365,7 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
   );
 }
 
- String? _imageBase64; 
+ String? _imageBase64;
 
   Future<void> _uploadImage() async {
     final base64String = await ImageHelper.pickImageAndConvertToBase64();
@@ -360,133 +380,584 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
     }
   }
 
-  Future<void> _showAddProductDialog() async {
-    String? productType = 'text';
-    String name = '';
-    String description = '';
-    int price = 0;
-    String content = '';
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Thêm sản phẩm', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      value: productType,
-                      onChanged: (value) {
-                        setState(() {
-                          productType = value;
-                        });
-                      },
-                      items: [
-                        DropdownMenuItem(value: 'text', child: Text('Truyện chữ')),
-                        DropdownMenuItem(value: 'comic', child: Text('Truyện tranh')),
-                        DropdownMenuItem(value: 'music', child: Text('Nhạc')),
-                        DropdownMenuItem(value: 'video', child: Text('Video')),
-                      ],
-                      decoration: InputDecoration(
-                        labelText: 'Chọn loại sản phẩm',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      onChanged: (value) => name = value,
-                      decoration: InputDecoration(labelText: 'Tên sản phẩm', border: OutlineInputBorder()),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      onChanged: (value) => description = value,
-                      decoration: InputDecoration(labelText: 'Mô tả', border: OutlineInputBorder()),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) => price = int.tryParse(value) ?? 0,
-                      decoration: InputDecoration(labelText: 'Giá (Diamonds)', border: OutlineInputBorder()),
-                    ),
-                    SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _uploadImage,
-                          child: Text('Tải ảnh từ thư viện'),
-                        ),
-                    SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ContentEditorScreen(initialContent: content),
-                          ),
-                        );
+  Future<List<int>> getChapIds(String chapType) async {
+  try {
+    // Lấy reference đến collection '178' trong document chapType
+    final docRef = FirebaseFirestore.instance.collection('series').doc(chapType).collection('178');
+    print("Fetching from path: series/$chapType/178");
 
-                        if (result != null) {
-                          content = result;
-                        }
-                      },
-                      child: Text('Nội dung'),
-                    ),
-                    SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (productType == null || name.isEmpty || description.isEmpty || price <= 0 || content.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin!')));
-                          return;
-                        }
+    // Lấy tất cả các document trong collection '178'
+    final querySnapshot = await docRef.get();
 
-                        try {
-                          final user = FirebaseAuth.instance.currentUser;
-                          
-                          if (user == null) throw Exception('User not logged in');
-                          final sellerId = user.uid;
-                         
-                          final data = {
-                            'name': name,
-                            'description': description,
-                            'price': price,
-                            'content': content,
-                            'sellerId': sellerId,
-                            'createdAt': FieldValue.serverTimestamp(),
-                            'imagecover': _imageBase64,
-                          };
+    // In ra thông tin raw từ Firestore
+    print("Documents fetched: ${querySnapshot.docs.length}");
+    querySnapshot.docs.forEach((doc) {
+      print("Document ID: ${doc.id}");
+    });
 
-                          await FirebaseFirestore.instance
-                              .collection('products')
-                              .doc(sellerId)
-                              .collection('textProducts')
-                              .add(data);
+    // Lọc ra danh sách các chapId dưới dạng số (int)
+    List<int> chapIds = querySnapshot.docs.map((doc) {
+      return int.tryParse(doc.id) ?? 5; // Chuyển ID của document thành int, nếu không được thì trả về 5
+    }).toList();
+    print("Parsed chapIds: $chapIds");
 
-                          _fetchTextProducts();
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sản phẩm đã được thêm!')));
-                        } catch (e) {
-                          print('Error adding product: $e');
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi khi thêm sản phẩm: $e')));
-                        }
-                      },
-                      child: Text('Thêm sản phẩm'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
+    chapIds.sort(); // Sắp xếp chapIds từ nhỏ đến lớn
+    return chapIds;
+  } catch (e) {
+    print('Error fetching chapIds: $e');
+    return [];
   }
 }
+
+  
+Future<void> _showAddProductDialog() async {
+  String? productType = 'text';
+  String genre = 'Kinh dị';
+  String storyType = 'All in one';
+  String name = '';
+  String description = '';
+  int price = 0;
+  String content = '';
+  String chapType = 'new';
+  int chapId = 0;
+  String nameChap= '';
+  List<DropdownMenuItem<String>> items = [];
+  late TextEditingController chapIdController;
+
+
+  final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('User not logged in');
+    final sellerId = user.uid;
+
+    // Truy vấn Firestore với sellerId
+    final snapshot = await FirebaseFirestore.instance
+        .collection('products')
+        .doc(sellerId)
+        .collection('textProducts')
+        .doc('178')
+        .collection('seriesChap')
+        .get();
+
+    // Xử lý dữ liệu từ snapshot và cập nhật items
+    final fetchedItems = snapshot.docs.map((doc) {
+      final data = doc.data() ;
+      return DropdownMenuItem<String>(
+        value: doc.id, // Sử dụng 'id' của document làm giá trị
+        child: Text(data['name'] ?? 'Không có tên'), // 'name' là trường cần hiển thị
+      );
+    }).toList();
+
+    fetchedItems.insert(0, DropdownMenuItem<String>(
+      value: 'new', 
+      child: Text('Tạo mới'), 
+    ));
+
+    // Cập nhật lại danh sách items
+    setState(() {
+      items = fetchedItems;
+    });
+  
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    builder: (BuildContext context) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: productType == 'text'
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Thêm sản phẩm',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: productType,
+                        onChanged: (value) {
+                          setState(() {
+                            productType = value;
+                          });
+                        },
+                        items: [
+                          DropdownMenuItem(value: 'text', child: Text('Truyện chữ')),
+                          DropdownMenuItem(value: 'comic', child: Text('Truyện tranh')),
+                          DropdownMenuItem(value: 'music', child: Text('Nhạc')),
+                          DropdownMenuItem(value: 'video', child: Text('Video')),
+                        ],
+                        decoration: InputDecoration(
+                          labelText: 'Chọn loại sản phẩm',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      // Dropdown chọn loại truyện
+                      DropdownButtonFormField<String>(
+                        value: storyType,
+                        onChanged: (value) {
+                          setState(() {
+                            storyType = value!;
+                          });
+                        },
+                        items: [
+                          DropdownMenuItem(value: 'All in one', child: Text('All in one')),
+                          DropdownMenuItem(value: 'Nhiều tập', child: Text('Nhiều tập')),
+                        ],
+                        decoration: InputDecoration(
+                          labelText: 'Loại truyện',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      // Giao diện hiển thị theo storyType
+                      storyType == 'All in one'
+                          ? Column(
+                            children: [
+                              DropdownButtonFormField<String>(
+                                  value: genre,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      genre = value!;
+                                    });
+                                  },
+                                  items: [
+                                    DropdownMenuItem(value: 'Kinh dị', child: Text('Kinh dị')),
+                                    DropdownMenuItem(value: 'Hài hước', child: Text('Hài hước')),
+                                    DropdownMenuItem(value: 'Ngôn tình', child: Text('Ngôn tình')),
+                                    DropdownMenuItem(value: 'Ma', child: Text('Ma')),
+                                    DropdownMenuItem(value: 'Trinh thám', child: Text('Trinh thám')),
+                                  ],
+                                  decoration: InputDecoration(
+                                    labelText: 'Thể loại truyện',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                                SizedBox(height: 16),
+                                TextField(
+                                  onChanged: (value) => name = value,
+                                  decoration: InputDecoration(labelText: 'Tên sản phẩm', border: OutlineInputBorder()),
+                                ),
+                                SizedBox(height: 16),
+                                TextField(
+                                  onChanged: (value) => description = value,
+                                  decoration: InputDecoration(labelText: 'Mô tả', border: OutlineInputBorder()),
+                                ),
+                                SizedBox(height: 16),
+                                TextField(
+                                  keyboardType: TextInputType.number,
+                                  onChanged: (value) => price = int.tryParse(value) ?? 0,
+                                  decoration: InputDecoration(labelText: 'Giá (Diamonds)', border: OutlineInputBorder()),
+                                ),
+                                SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: _uploadImage,
+                                  child: Text('Tải ảnh bìa'),
+                                ),
+                                SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ContentEditorScreen(initialContent: content),
+                                      ),
+                                    );
+
+                                    if (result != null) {
+                                      content = result;
+                                    }
+                                  },
+                                  child: Text('Nội dung'),
+                                ),
+
+                                SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    if (productType == null ||
+                                        name.isEmpty ||
+                                        description.isEmpty ||
+                                        price < 0 ||
+                                        content.isEmpty) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin!')));
+                                      return;
+                                    }
+
+                                    try {
+                                      final user = FirebaseAuth.instance.currentUser;
+
+                                      if (user == null) throw Exception('User not logged in');
+                                      final sellerId = user.uid;
+
+                                      final userDoc =
+                                          await FirebaseFirestore.instance.collection('users').doc(sellerId).get();
+                                      final authorName = userDoc.exists ? userDoc.get('fullName') ?? 'Không rõ' : 'Không rõ';
+
+                                      final data = {
+                                        'name': name,
+                                        'description': description,
+                                        'price': price,
+                                        'content': content,
+                                        'sellerId': sellerId,
+                                        'createdAt': FieldValue.serverTimestamp(),
+                                        'imagecover': _imageBase64,
+                                        'authorName': authorName,
+                                        'genre': genre, 
+                                        'storyType': storyType, 
+
+                                      };
+                                      await FirebaseFirestore.instance
+                                          .collection('products')
+                                          .doc(sellerId)
+                                          .collection('textProducts')
+                                          .doc('178') 
+                                          .collection('allinone') 
+                                          .add(data); 
+                                      
+
+
+                                      _fetchTextProducts();
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(SnackBar(content: Text('Sản phẩm đã được thêm!')));
+                                    } catch (e) {
+                                      print('Error adding product: $e');
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(SnackBar(content: Text('Lỗi khi thêm sản phẩm: $e')));
+                                    }
+                                  },
+                                  child: Text('Thêm sản phẩm'),
+                                ),
+                                
+                            ],
+                            
+                          )
+                            
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                
+                                FutureBuilder(
+                                future: Future.delayed(Duration(seconds: 0), () => items),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState == ConnectionState.waiting) {
+                                    return Center(child: CircularProgressIndicator());
+                                  } else if (snapshot.hasError) {
+                                    return Text('Lỗi khi tải dữ liệu: ${snapshot.error}');
+                                  } else if (snapshot.data == null || snapshot.data!.isEmpty) {
+                                    return Text('Không có dữ liệu.');
+                                  }
+
+                                  return DropdownButtonFormField<String>(
+                                    value: chapType,
+                                    onChanged: (value) async {
+                                    try {
+                                      final chapIds = await getChapIds(value!); 
+                                      setState(() {
+                                        chapType = value; 
+                                        chapId = chapIds.isNotEmpty ? chapIds.last : 0; 
+                                        chapIdController = TextEditingController(text: chapId.toString());
+                                      });
+                                      print('chapType: $chapType');
+                                      print('chapId: $chapId');
+                                    } catch (e) {
+                                      print('Error fetching chapIds: $e');
+                                    }
+                                    
+                                  },
+
+                                    
+                                    items: items,
+                                    decoration: InputDecoration(
+                                      labelText: 'Chọn truyện',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  );
+                                },
+                              ),
+                                 SizedBox(height: 16,),
+                                chapType == 'new'
+                                ? Column(
+                                  children: [
+                                    DropdownButtonFormField<String>(
+                                  value: genre,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      genre = value!;
+                                    });
+                                    
+                                  },
+                                  items: [
+                                    DropdownMenuItem(value: 'Kinh dị', child: Text('Kinh dị')),
+                                    DropdownMenuItem(value: 'Hài hước', child: Text('Hài hước')),
+                                    DropdownMenuItem(value: 'Ngôn tình', child: Text('Ngôn tình')),
+                                    DropdownMenuItem(value: 'Ma', child: Text('Ma')),
+                                    DropdownMenuItem(value: 'Trinh thám', child: Text('Trinh thám')),
+                                  ],
+                                  decoration: InputDecoration(
+                                    labelText: 'Thể loại truyện',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                 
+                                ),
+                                    SizedBox(height: 16),
+                                    TextField(
+                                      onChanged: (value) => name = value,
+                                      decoration: InputDecoration(
+                                        labelText: 'Tên bộ truyện mới',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
+                                    SizedBox(height: 16),
+                                    TextField(
+                                      onChanged: (value) => description = value,
+                                      decoration: InputDecoration(
+                                        labelText: 'Mô tả bộ truyện',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
+                                    SizedBox(height: 16),
+                                     ElevatedButton(
+                                    onPressed: _uploadImage,
+                                    child: Text('Tải ảnh bìa'),
+                                  ),
+                                    SizedBox(height: 16,),
+                                      ElevatedButton(
+                                      onPressed: () async {
+                                        if (productType == null ||
+                                            name.isEmpty ||
+                                            description.isEmpty
+                                            ) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin!')));
+                                          return;
+                                        }
+
+                                        try {
+                                          final user = FirebaseAuth.instance.currentUser;
+
+                                          if (user == null) throw Exception('User not logged in');
+                                          final sellerId = user.uid;
+
+                                          final userDoc =
+                                              await FirebaseFirestore.instance.collection('users').doc(sellerId).get();
+                                          final authorName = userDoc.exists ? userDoc.get('fullName') ?? 'Không rõ' : 'Không rõ';
+
+                                          final data = {
+                                            'name': name,
+                                            'description': description,
+                                            'sellerId': sellerId,
+                                            'createdAt': FieldValue.serverTimestamp(),
+                                            'imagecover': _imageBase64,
+                                            'authorName': authorName,
+                                            'genre': genre, 
+                                            'storyType': storyType, 
+                                          };
+                                          final docRef = await FirebaseFirestore.instance
+                                                .collection('products')
+                                                .doc(sellerId)
+                                                .collection('textProducts')
+                                                .doc('178')
+                                                .collection('seriesChap')
+                                                .add(data);
+
+                                            // Lấy ID tự động từ document vừa thêm
+                                            final storyId = docRef.id;
+
+                                            // Thêm ID vào 'series'
+                                            await FirebaseFirestore.instance
+                                                .collection('series')
+                                                .doc(storyId)
+                                                .collection('178')
+                                                .doc(chapId.toString())
+                                                .set({
+                                                  'storyId': storyId
+                                                });
+
+                                          _fetchTextProducts();
+                                          Navigator.pop(context);
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(SnackBar(content: Text('Sản phẩm đã được thêm!')));
+                                        } catch (e) {
+                                          print('Error adding product: $e');
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(SnackBar(content: Text('Lỗi khi thêm sản phẩm: $e')));
+                                        }
+                                      },
+                                      child: Text('Thêm sản phẩm'),
+                                    ),
+
+                                      ],
+                                    )
+                                    : Column(
+                                      
+                                      children: [
+                                      TextFormField(
+                                      readOnly: true,
+                                      controller: TextEditingController(text: 'Chap $chapId'),
+                                      decoration: InputDecoration(
+                                        labelText: 'Chap mới nhất',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
+                                      SizedBox(height: 16),
+                                      TextFormField(
+          controller: chapIdController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: 'Chap muốn thêm hoặc sửa',
+            border: OutlineInputBorder(),
+          ),
+          onChanged: (value) {
+            setState(() {
+              chapId = int.tryParse(value) ?? chapId;
+            });
+          },
+        ),
+
+                                      SizedBox(height: 16,),
+                                      TextField(
+                                        maxLines: null,
+                                        decoration: InputDecoration(
+                                          labelText: 'Tên Chap',
+                                          border: OutlineInputBorder(),
+                                          alignLabelWithHint: true,
+                                        ),
+                                        onChanged: (value) {
+                                          nameChap = value;
+                                        },
+                                      ),
+                                      SizedBox(height: 16,),
+                                      TextField(
+                                      keyboardType: TextInputType.number,
+                                      onChanged: (value) => price = int.tryParse(value) ?? 0,
+                                      decoration: InputDecoration(labelText: 'Giá (Diamonds)', border: OutlineInputBorder()),
+                                    ),                                   
+                                      SizedBox(height: 16,),
+                                      ElevatedButton(
+                                      onPressed: () async {
+                                        final result = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ContentEditorScreen(initialContent: content),
+                                          ),
+                                        );
+
+                                        if (result != null) {
+                                          content = result;
+                                        }
+                                      },
+                                      child: Text('Nội dung'),
+                                    ),
+                                    SizedBox(height: 16,),
+                                      ElevatedButton(
+                                      onPressed: () async {
+                                        if (
+                                            chapId.toString().isEmpty || 
+                                            nameChap.isEmpty ||
+                                            price < 0 ||
+                                            content.isEmpty) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin!')));
+                                          return;
+                                        }
+
+                                        try {
+                                          final user = FirebaseAuth.instance.currentUser;
+
+                                          if (user == null) throw Exception('User not logged in');
+                                          final sellerId = user.uid;
+
+                                          final data = {
+                                            'chapId': chapId,
+                                            'nameChap': nameChap,
+                                            'price': price,
+                                            'content': content,
+                                            'sellerId': sellerId,
+                                            'createdAt': FieldValue.serverTimestamp(),
+                                          };
+
+                                          await FirebaseFirestore.instance
+                                          .collection('series')
+                                          .doc(chapType)
+                                          .collection('178')    
+                                          .doc(chapId.toString())                                      
+                                          .set(data); 
+
+                                          _fetchTextProducts();
+                                          Navigator.pop(context);
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(SnackBar(content: Text('Sản phẩm đã được thêm!')));
+                                        } catch (e) {
+                                          print('Error adding product: $e');
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(SnackBar(content: Text('Lỗi khi thêm sản phẩm: $e')));
+                                        }
+                                      },
+                                      child: Text('Thêm sản phẩm'),
+                                    ),
+
+                                    ],
+                                ),
+
+                                
+                              ],
+                            ),
+                      SizedBox(height: 16),
+                      
+                      
+                    ],
+                  )
+                : Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        DropdownButtonFormField<String>(
+                          value: productType,
+                          onChanged: (value) {
+                            setState(() {
+                              productType = value;
+                            });
+                          },
+                          items: [
+                            DropdownMenuItem(value: 'text', child: Text('Truyện chữ')),
+                            DropdownMenuItem(value: 'comic', child: Text('Truyện tranh')),
+                            DropdownMenuItem(value: 'music', child: Text('Nhạc')),
+                            DropdownMenuItem(value: 'video', child: Text('Video')),
+                          ],
+                          decoration: InputDecoration(
+                            labelText: 'Chọn loại sản phẩm',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Chức năng đang được phát triển!',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+              );
+          },
+        ),
+      );
+    },
+  );
+}
+}
+
+
 
 class ContentEditorScreen extends StatefulWidget {
   final String? initialContent;

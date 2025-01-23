@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:hakai/screens/screens.dart';
+
 import 'dart:convert';
 
 class WordStoryScreen extends StatefulWidget {
@@ -133,23 +133,48 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
                                 child: Row(
                                   children: [
                                     Text(
-                                      '${product['price']}',
+                                      '${product['rate']?.toStringAsFixed(1) ?? '0.0'}', // Hiển thị đánh giá
                                       style: TextStyle(
                                         color: Colors.grey,
-                                        fontSize: screenstextwidth * 0.025, 
+                                        fontSize: screenstextwidth * 0.025,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    SizedBox(width: screenstextwidth * 0.01), 
-                                    Icon(
-                                      Icons.diamond,
-                                      color: Colors.grey,
-                                      size: screenstextwidth * 0.03, 
+                                    SizedBox(width: screenstextwidth * 0.01),
+                                    Row(
+                                      children: [
+                                        ...List.generate(5, (index) {
+                                          final rating = product['rate'] ?? 0.0;
+                                          if (index < rating.floor()) {
+                                            // Sao đầy
+                                            return Icon(
+                                              Icons.star,
+                                              color: Colors.amber,
+                                              size: screenstextwidth * 0.03,
+                                            );
+                                          } else if (index < rating && rating - index > 0) {
+                                            // Sao một phần
+                                            return Icon(
+                                              Icons.star_half,
+                                              color: Colors.amber,
+                                              size: screenstextwidth * 0.03,
+                                            );
+                                          } else {
+                                            // Sao trống
+                                            return Icon(
+                                              Icons.star_border,
+                                              color: Colors.grey,
+                                              size: screenstextwidth * 0.03,
+                                            );
+                                          }
+                                        }),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ),
+
 
                               ],
                             ),
@@ -178,7 +203,7 @@ Widget _buildProductDetails(Map<String, dynamic> product) {
           ),
           SizedBox(height: 8),
           Text(
-            'Tác giả: ${product['author'] ?? 'Không rõ'}',
+            'Tác giả: ${product['authorName'] ?? 'Không rõ'}',
             style: TextStyle(fontSize: 16),
           ),
           SizedBox(height: 8),

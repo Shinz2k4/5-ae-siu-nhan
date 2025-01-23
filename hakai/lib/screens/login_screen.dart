@@ -18,13 +18,10 @@ class _LoginScreenState extends State<LoginScreen> {
   // Đăng nhập với Firebase Authentication
   Future<void> _login() async {
     try {
-      // Gọi Firebase Auth để đăng nhập
       UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text,
         password: _passwordController.text,
       );
-
-      // Chuyển đến trang Home nếu đăng nhập thành công
       if (userCredential.user != null) {
         Navigator.pushReplacement(
           context,
@@ -34,6 +31,23 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       setState(() {
         _errorMessage = "Invalid email or password. Please try again.";
+      });
+    }
+  }
+
+  // Đăng nhập với tư cách khách
+  Future<void> _loginAsGuest() async {
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.signInAnonymously();
+      if (userCredential.user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = "Unable to login as guest. Please try again.";
       });
     }
   }
@@ -93,11 +107,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) =>ForgetPasswordScreen()),
+                    MaterialPageRoute(builder: (context) => ForgetPasswordScreen()),
                   );
-                }, 
-                child: Text('Forgot password')
-                ),
+                },
+                child: Text('Forgot password'),
+              ),
+              SizedBox(height: 20),
+              Divider(),
+              ElevatedButton(
+                onPressed: _loginAsGuest,
+                child: Text("Continue as Guest"),
+              ),
             ],
           ),
         ),
