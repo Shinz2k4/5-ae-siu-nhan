@@ -1,4 +1,4 @@
-# Nhóm 11 - DocNews-App
+# Nhóm 11 - Hakai
 
 ## Members:
 
