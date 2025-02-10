@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'dart:convert';
 
+import 'package:hakai/screens/series_chapter_screen.dart';
+
 class WordStoryScreen extends StatefulWidget {
   @override
   _WordStoryScreenState createState() => _WordStoryScreenState();
@@ -72,7 +74,7 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
                             BorderRadius.vertical(top: Radius.circular(20)),
                       ),
                       builder: (context) {
-                        return _buildProductDetails(product);
+                        return _buildProductDetails(product,context);
                       },
                     );
                   },
@@ -190,7 +192,7 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
         );
 }
 
-Widget _buildProductDetails(Map<String, dynamic> product) {
+Widget _buildProductDetails(Map<String, dynamic> product,context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -217,10 +219,18 @@ Widget _buildProductDetails(Map<String, dynamic> product) {
             style: TextStyle(fontSize: 14, color: Colors.orange),
           ),
           SizedBox(height: 16),
+          
           ElevatedButton(
             onPressed: () {
-              
-              print("Reading ${product['name']}...");
+              print("charType: ${product['charType']}");
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => SeriesChapScreen(
+                    chapType: product['charType'] ?? '2vmsDfhtKjXDna3czkLL',
+                  ),
+                ),
+              );
+
             },
             child: Text('Đọc truyện'),
           ),

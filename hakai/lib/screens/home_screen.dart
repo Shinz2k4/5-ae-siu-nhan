@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hakai/screens/screens.dart';
-import 'package:hakai/screens/wordStoryScreen.dart';
+import 'package:hakai/screens/word_story_screen.dart';
 
 void main() {
   runApp(MyApp());

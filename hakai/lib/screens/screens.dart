@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:hakai/screens/image.dart';
 import 'dart:convert';
-
+import 'series_chapter_screen.dart';
 
 class ApplySellerScreen extends StatelessWidget {
   @override
@@ -356,12 +356,19 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
         ),
         SizedBox(height: 16),
         ElevatedButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            print("Reading ${product['name']}...");
-          },
-          child: Text('Đọc truyện'),
-        ),
+            onPressed: () {
+              print("charType: ${product['charType']}");
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => SeriesChapScreen(
+                    chapType: product['charType'] ?? '2vmsDfhtKjXDna3czkLL',
+                  ),
+                ),
+              );
+
+            },
+            child: Text('Đọc truyện'),
+          ),
       ],
     ),
   );
@@ -759,6 +766,7 @@ Future<void> _showAddProductDialog() async {
                                             'authorName': authorName,
                                             'genre': genre, 
                                             'storyType': storyType, 
+                                            
                                           };
                                           final docRef = await FirebaseFirestore.instance
                                                 .collection('products')
@@ -780,7 +788,16 @@ Future<void> _showAddProductDialog() async {
                                                 .set({
                                                   'storyId': storyId
                                                 });
-
+                                            await FirebaseFirestore.instance
+                                                .collection('products')
+                                                .doc(sellerId)
+                                                .collection('textProducts')
+                                                .doc('178')
+                                                .collection('seriesChap')
+                                                .doc(storyId)
+                                                .update({
+                                                  'charType': storyId,
+                                                });
                                           _fetchTextProducts();
                                           Navigator.pop(context);
                                           ScaffoldMessenger.of(context)
@@ -809,18 +826,18 @@ Future<void> _showAddProductDialog() async {
                                     ),
                                       SizedBox(height: 16),
                                       TextFormField(
-          controller: chapIdController,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: 'Chap muốn thêm hoặc sửa',
-            border: OutlineInputBorder(),
-          ),
-          onChanged: (value) {
-            setState(() {
-              chapId = int.tryParse(value) ?? chapId;
-            });
-          },
-        ),
+                                      controller: chapIdController,
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        labelText: 'Chap muốn thêm hoặc sửa',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          chapId = int.tryParse(value) ?? chapId;
+                                        });
+                                      },
+                                    ),
 
                                       SizedBox(height: 16,),
                                       TextField(
