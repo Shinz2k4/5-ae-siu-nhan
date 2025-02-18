@@ -324,17 +324,128 @@ class MusicScreen extends StatelessWidget {
     );
   }
 }
+
 class VideoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Video Screen"),
+        automaticallyImplyLeading: false,
       ),
-      body: Center(child: Text("Video Screen")),
+      body: Container(
+        color: Colors.lightBlue[50],
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Card(
+                      elevation: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Text(
+                          'Video ngẫu nhiên nảy ra cặp chữ',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue[900],
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Card(
+                      elevation: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Text(
+                          'Video này sẽ giúp bạn học cách phát âm và ghi nhớ các cặp chữ tiếng Anh một cách dễ dàng thông qua hình ảnh trực quan và âm thanh sống động. Nội dung được thiết kế đặc biệt để phù hợp với mọi trình độ, từ người mới bắt đầu đến người học nâng cao. Bạn sẽ được hướng dẫn chi tiết cách phát âm chuẩn và các mẹo ghi nhớ hiệu quả.',
+                          style: TextStyle(fontSize: 16, height: 1.5),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Card(
+                      elevation: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Row(
+                          children: [
+                            Icon(Icons.star, color: Colors.amber, size: 28),
+                            Icon(Icons.star, color: Colors.amber, size: 28),
+                            Icon(Icons.star, color: Colors.amber, size: 28),
+                            Icon(Icons.star, color: Colors.amber, size: 28),
+                            Icon(Icons.star_border, color: Colors.amber, size: 28),
+                            SizedBox(width: 12),
+                            Text('170 Views', style: TextStyle(fontSize: 16)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Card(
+                      elevation: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            buildInfoColumn(Icons.access_time, 'Duration:', '10 min'),
+                            buildInfoColumn(Icons.calendar_today, 'Upload:', 'Today'),
+                            buildInfoColumn(Icons.remove_red_eye, 'Views:', '1.2K'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: AspectRatio(
+                  aspectRatio: 16/9,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/Screenshot.jpg'),
+                        fit: BoxFit.cover,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.play_circle_outline,
+                        size: 64,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
+  Widget buildInfoColumn(IconData icon, String label, String value) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.grey[700]),
+        SizedBox(height: 4),
+        Text(label, style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(value, style: TextStyle(color: Colors.grey[700])),
+      ],
+    );
+  }
+
 
 class ProfileScreen extends StatefulWidget {
   @override

@@ -15,6 +15,15 @@ class SeriesChapScreen extends StatelessWidget {
 
     return querySnapshot.docs
         .map((doc) => {'chapId': doc.id, ...doc.data()})
+        .where((chapter) {
+          try {
+            int chapId = int.parse(chapter['chapId'].toString());
+            return chapId >= 1;
+          } catch (e) {
+            print('Error parsing chapId: $e');
+            return false;
+          }
+        })
         .toList();
   }
 

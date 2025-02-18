@@ -192,49 +192,130 @@ Widget _buildProductList(List<Map<String, dynamic>> products) {
         );
 }
 
-Widget _buildProductDetails(Map<String, dynamic> product,context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            product['name'],
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Tác giả: ${product['authorName'] ?? 'Không rõ'}',
-            style: TextStyle(fontSize: 16),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Mô tả: ${product['description'] ?? 'Không có mô tả'}',
-            style: TextStyle(fontSize: 14),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Đánh giá: ${product['rating']?.toStringAsFixed(1) ?? 'Chưa có đánh giá'} ⭐',
-            style: TextStyle(fontSize: 14, color: Colors.orange),
-          ),
-          SizedBox(height: 16),
-          
-          ElevatedButton(
-            onPressed: () {
-              print("charType: ${product['charType']}");
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => SeriesChapScreen(
-                    chapType: product['charType'] ?? '2vmsDfhtKjXDna3czkLL',
+
+Widget _buildProductDetails(Map<String, dynamic> product, BuildContext context) {
+  double rating = product['rate'] ?? 0.0;
+  double screenWidth = MediaQuery.of(context).size.width; // Lấy kích thước màn hình
+
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Layout co giãn theo màn hình
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Ảnh có thể co giãn theo chiều ngang
+                Flexible(
+                  flex: screenWidth > 600 ? 3 : 4,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: AspectRatio(
+                      aspectRatio: 6/9,
+                      child: product['imagecover'] != null && product['imagecover']!.isNotEmpty
+                          ? Image.memory(
+                              base64Decode(product['imagecover']!),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                            )
+                          : Image.network(
+                              'https://via.placeholder.com/600x900',
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                            ),
+                    ),
                   ),
                 ),
-              );
-
-            },
-            child: Text('Đọc truyện'),
-          ),
-        ],
+                SizedBox(width: 16),
+                // Nội dung
+                Expanded(
+                  flex: 4, // Phần text rộng hơn ảnh
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product['name'],
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                          color: Colors.blueAccent,
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        'Tác giả: ${product['authorName'] ?? 'Không rõ'}',
+                        style: TextStyle(fontSize: 18, color: Colors.grey[700]),
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        'Mô tả: ${product['description'] ?? 'Không có mô tả'}',
+                        style: TextStyle(fontSize: 16, color: Colors.black87),
+                        maxLines: 5,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 12),
+                      // Hiển thị 5 ngôi sao đánh giá
+                      Row(
+                        children: List.generate(5, (index) {
+                          if (index + 1 <= rating) {
+                            return Icon(Icons.star, color: Colors.orange, size: 28);
+                          } else if (index < rating && (rating - index) > 0) {
+                            return Icon(Icons.star_half, color: Colors.orange, size: 28);
+                          } else {
+                            return Icon(Icons.star_border, color: Colors.orange, size: 28);
+                          }
+                        }),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        '${rating.toStringAsFixed(1)} / 5',
+                        style: TextStyle(fontSize: 16, color: Colors.orange),
+                      ),
+                      SizedBox(height: 20),
+                      // Nút "Đọc truyện"
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            padding: EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 3,
+                          ),
+                          onPressed: () {
+                            print("charType: ${product['charType']}");
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => SeriesChapScreen(
+                                  chapType: product['charType'] ?? '2vmsDfhtKjXDna3czkLL',
+                                ),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'Đọc truyện',
+                            style: TextStyle(fontSize: 18, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
