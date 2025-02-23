@@ -1,14 +1,17 @@
 # Nhóm 11 - Hakai
 
 ## Members:
-
 - Đỗ Đăng Minh
-- Nguyễn Chí Thanh
-- Tạ Thành Phú
+- Nguyễn Lệ Thu ( Giảng viên hỗ trợ ) 
+
+## Công nghệ áp dụng 
+Fontend: dart, html, css
+Backend: firebase
 
 ## Introduction
+Hakai – Ứng dụng giải trí đa nền tảng, nơi bạn có thể đọc truyện tranh, truyện chữ, nghe nhạc và xem video chỉ trong một ứng dụng duy nhất. Với kho nội dung phong phú, giao diện thân thiện và trải nghiệm mượt mà, Hakai mang đến thế giới giải trí bất tận, phù hợp với mọi sở thích của bạn.
 
-News and Articles Application
+Dù bạn là một tín đồ của truyện tranh, một người đam mê tiểu thuyết, hay chỉ muốn thư giãn với âm nhạc và video, Hakai sẽ đáp ứng tất cả! 
 
 # Structural Diagram
 
