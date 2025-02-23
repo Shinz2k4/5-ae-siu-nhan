@@ -5,7 +5,7 @@
 - Nguyễn Lệ Thu ( Giảng viên hỗ trợ ) 
 
 ## Công nghệ áp dụng 
-Fontend: dart, html, css
+Fontend: dart, html, css  
 Backend: firebase
 
 ## Introduction
