@@ -2,6 +2,8 @@
 
 ## Members:
 - Đỗ Đăng Minh
+- Nguyễn Chí Thanh
+- Tạ Thành Phú
 - Nguyễn Lệ Thu ( Giảng viên hỗ trợ ) 
 
 ## Công nghệ áp dụng 
