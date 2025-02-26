@@ -19,7 +19,7 @@ Dù bạn là một tín đồ của truyện tranh, một người đam mê ti�
 
 Class Diagram
 
-#![Image](<./hakai/assets/DocNews-App.png>)
+![image](https://github.com/user-attachments/assets/4a72a016-1007-4a1e-b5a0-45283eede917)
 
 ```
 Class User {
