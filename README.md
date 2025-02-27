@@ -17,7 +17,6 @@ Dù bạn là một tín đồ của truyện tranh, một người đam mê ti�
 
 # Structural Diagram
 
-Class Diagram
 
 ![image](https://github.com/user-attachments/assets/4a72a016-1007-4a1e-b5a0-45283eede917)
 
